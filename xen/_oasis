@@ -1,0 +1,25 @@
+OASISFormat: 0.2
+Name:        xenstore_servers
+Version:     0.9-dev
+Synopsis:    Kernelspace xenstore server
+Authors:     Dave Scott, Anil Madhavapeddy
+License:     LGPL-2.1 with OCaml linking exception
+Plugins:     META (0.2)
+BuildTools:  ocamlbuild
+
+Library xenstore_server_domain
+  CompiledObject:     native
+  Path:               lib
+  Findlibname:        xenstore_server_domain
+  Modules:            Xs_transport_domain
+  BuildDepends:       lwt, xenstore, xenstore.server, cstruct, mirage
+
+Executable            server_xen
+  Target:             xen
+  CompiledObject:     best
+  Path:               src
+  MainIs:             server_xen.ml
+  Install:            false
+  Custom:             true
+  BuildDepends:       lwt, xenstore, xenstore.server, xenstore_server_domain, cstruct, mirage
+

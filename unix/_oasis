@@ -1,0 +1,27 @@
+OASISFormat: 0.2
+Name:        xenstore_servers
+Version:     0.9-dev
+Synopsis:    Userspace xenstore server
+Authors:     Dave Scott, Anil Madhavapeddy
+License:     LGPL-2.1 with OCaml linking exception
+Plugins:     META (0.2)
+BuildTools:  ocamlbuild
+
+Library xenstore_unix
+  CompiledObject:     best
+  Path:               lib
+  Findlibname:        xenstore_server_unix
+  Modules:            Xs_transport_unix, Xs_transport_xen, Xenstore
+  BuildDepends:       lwt, xenstore, xenstore.server
+  CSources:           xenstore_stubs.c
+  CCOpt:              -I. -I/home/djs/.opam/system/lib -I/home/djs/.opam/system/lib/lwt -I/usr/lib/ocaml/lwt
+  CClib:              -lxenctrl
+
+Executable server_unix
+  CompiledObject:     best
+  Build$:             flag(unix)
+  Path:               src
+  MainIs:             server_unix.ml
+  Custom:             true
+  Install:            false
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.server, xenstore_server_unix
