@@ -12,7 +12,7 @@ Library xenstore_server_domain
   Path:               lib
   Findlibname:        xenstore_server_domain
   Modules:            Xs_transport_domain
-  BuildDepends:       lwt, xenstore, xenstore.server, cstruct, mirage
+  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, cstruct, cstruct.syntax, mirage
 
 Executable            server_xen
   Target:             xen
@@ -21,5 +21,5 @@ Executable            server_xen
   MainIs:             server_xen.ml
   Install:            false
   Custom:             true
-  BuildDepends:       lwt, xenstore, xenstore.server, xenstore_server_domain, cstruct, mirage
+  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, xenstore_server_domain, cstruct, mirage
 
