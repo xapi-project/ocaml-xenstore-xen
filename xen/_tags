@@ -1,0 +1,46 @@
+# OASIS_START
+# DO NOT EDIT (digest: c4d044cb1c54145bbe3edf44a138e4b4)
+# Ignore VCS directories, you can use the same kind of rule outside 
+# OASIS_START/STOP if you want to exclude directories that contains 
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library xenstore_server_domain
+"lib/xenstore_server_domain.cmxs": use_xenstore_server_domain
+<lib/*.ml{,i}>: pkg_lwt
+<lib/*.ml{,i}>: pkg_lwt.syntax
+<lib/*.ml{,i}>: pkg_xenstore
+<lib/*.ml{,i}>: pkg_xenstore.server
+<lib/*.ml{,i}>: pkg_cstruct
+<lib/*.ml{,i}>: pkg_mirage
+<lib/*.ml{,i}>: pkg_cstruct.syntax
+# Executable server_xen
+<src/server_xen.{native,byte,nobj.o}>: use_xenstore_server_domain
+<src/server_xen.{native,byte,nobj.o}>: pkg_lwt
+<src/server_xen.{native,byte,nobj.o}>: pkg_lwt.syntax
+<src/server_xen.{native,byte,nobj.o}>: pkg_xenstore
+<src/server_xen.{native,byte,nobj.o}>: pkg_xenstore.server
+<src/server_xen.{native,byte,nobj.o}>: pkg_cstruct
+<src/server_xen.{native,byte,nobj.o}>: pkg_mirage
+<src/server_xen.{native,byte,nobj.o}>: pkg_cstruct.syntax
+<src/*.ml{,i}>: use_xenstore_server_domain
+<src/*.ml{,i}>: pkg_lwt
+<src/*.ml{,i}>: pkg_lwt.syntax
+<src/*.ml{,i}>: pkg_xenstore
+<src/*.ml{,i}>: pkg_xenstore.server
+<src/*.ml{,i}>: pkg_cstruct
+<src/*.ml{,i}>: pkg_mirage
+<src/*.ml{,i}>: pkg_cstruct.syntax
+<src/server_xen.{native,byte,nobj.o}>: custom
+# OASIS_STOP
+true: annot
+<*/*>: syntax_camlp4o
+<*/*>: pkg_lwt.syntax
