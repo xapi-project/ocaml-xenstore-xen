@@ -1,0 +1,10 @@
+# OASIS_START
+# DO NOT EDIT (digest: 8f6e6b1794b68dd895ddc9f27e542e12)
+version = "0.9-dev"
+description = "Userspace xenstore server"
+requires = "lwt lwt.syntax xenstore xenstore.server"
+archive(byte) = "xenstore_unix.cma"
+archive(native) = "xenstore_unix.cmxa"
+exists_if = "xenstore_unix.cma"
+# OASIS_STOP
+

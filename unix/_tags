@@ -1,0 +1,38 @@
+# OASIS_START
+# DO NOT EDIT (digest: 3bc1918ff2f85f319ff34087ed8acc08)
+# Library xenstore_unix
+"lib": include
+<lib/*.ml{,i}>: oasis_library_xenstore_unix_ccopt
+"lib/xenstore_stubs.c": oasis_library_xenstore_unix_ccopt
+<lib/xenstore_unix.{cma,cmxa}>: oasis_library_xenstore_unix_cclib
+"lib/libxenstore_unix.lib": oasis_library_xenstore_unix_cclib
+"lib/dllxenstore_unix.dll": oasis_library_xenstore_unix_cclib
+"lib/libxenstore_unix.a": oasis_library_xenstore_unix_cclib
+"lib/dllxenstore_unix.so": oasis_library_xenstore_unix_cclib
+<lib/xenstore_unix.{cma,cmxa}>: use_libxenstore_unix
+<lib/*.ml{,i}>: pkg_xenstore.server
+<lib/*.ml{,i}>: pkg_xenstore
+<lib/*.ml{,i}>: pkg_lwt.syntax
+<lib/*.ml{,i}>: pkg_lwt
+"lib/xenstore_stubs.c": pkg_xenstore.server
+"lib/xenstore_stubs.c": pkg_xenstore
+"lib/xenstore_stubs.c": pkg_lwt.syntax
+"lib/xenstore_stubs.c": pkg_lwt
+# Executable server_unix
+<src/server_unix.{native,byte}>: use_xenstore_unix
+<src/server_unix.{native,byte}>: pkg_xenstore.server
+<src/server_unix.{native,byte}>: pkg_xenstore
+<src/server_unix.{native,byte}>: pkg_lwt.unix
+<src/server_unix.{native,byte}>: pkg_lwt.syntax
+<src/server_unix.{native,byte}>: pkg_lwt
+<src/*.ml{,i}>: use_xenstore_unix
+<src/*.ml{,i}>: pkg_xenstore.server
+<src/*.ml{,i}>: pkg_xenstore
+<src/*.ml{,i}>: pkg_lwt.unix
+<src/*.ml{,i}>: pkg_lwt.syntax
+<src/*.ml{,i}>: pkg_lwt
+<src/server_unix.{native,byte}>: custom
+# OASIS_STOP
+true: annot
+<*/*>: syntax_camlp4o
+<*/*>: pkg_lwt.syntax
