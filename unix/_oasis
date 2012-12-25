@@ -7,7 +7,7 @@ License:     LGPL-2.1 with OCaml linking exception
 Plugins:     META (0.2)
 BuildTools:  ocamlbuild
 
-Library xenstore_unix
+Library xenstore_server_unix
   CompiledObject:     best
   Path:               lib
   Findlibname:        xenstore_server_unix
@@ -15,8 +15,8 @@ Library xenstore_unix
   BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, shared-memory-ring, shared-memory-ring.xenstore
   CSources:           xenstore_stubs.c
 # Surely I don't actually need these
-#  CCOpt:              -I. -I/home/djs/.opam/system/lib -I/home/djs/.opam/system/lib/lwt -I/usr/lib/ocaml/lwt
-#  CClib:              -lxenctrl
+  CCOpt:              -I. -I/home/djs/.opam/system/lib -I/home/djs/.opam/system/lib/lwt -I/usr/lib/ocaml/lwt
+  CClib:              -lxenctrl
 
 Executable server_unix
   CompiledObject:     best

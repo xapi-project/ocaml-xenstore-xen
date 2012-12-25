@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 1223f3e4181160530116d02ab0e3d8d6) *)
+(* DO NOT EDIT (digest: 01d6e8a8fe5d59d85e1f5d10fd65a5b6) *)
 module OASISGettext = struct
 # 21 "/home/djs/oasis/src/oasis/OASISGettext.ml"
 
@@ -558,15 +558,36 @@ end
 open Ocamlbuild_plugin;;
 let package_default =
   {
-     MyOCamlbuildBase.lib_ocaml = [("xenstore_unix", ["lib"])];
-     lib_c = [("xenstore_unix", "lib", [])];
-     flags = [];
+     MyOCamlbuildBase.lib_ocaml = [("xenstore_server_unix", ["lib"])];
+     lib_c = [("xenstore_server_unix", "lib", [])];
+     flags =
+       [
+          (["oasis_library_xenstore_server_unix_ccopt"; "compile"],
+            [
+               (OASISExpr.EBool true,
+                 S
+                   [
+                      A "-ccopt";
+                      A "-I.";
+                      A "-ccopt";
+                      A "-I/home/djs/.opam/system/lib";
+                      A "-ccopt";
+                      A "-I/home/djs/.opam/system/lib/lwt";
+                      A "-ccopt";
+                      A "-I/usr/lib/ocaml/lwt"
+                   ])
+            ]);
+          (["oasis_library_xenstore_server_unix_cclib"; "link"],
+            [(OASISExpr.EBool true, S [A "-cclib"; A "-lxenctrl"])]);
+          (["oasis_library_xenstore_server_unix_cclib"; "ocamlmklib"; "c"],
+            [(OASISExpr.EBool true, S [A "-lxenctrl"])])
+       ];
      includes = [("src", ["lib"])];
      }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 571 "myocamlbuild.ml"
+# 592 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;
