@@ -1,19 +1,21 @@
 
-external map_foreign_job: int -> nativeint -> Cstruct.buf Lwt_unix.job = "lwt_map_foreign_job"
+type buf = (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
+
+external map_foreign_job: int -> nativeint -> buf Lwt_unix.job = "lwt_map_foreign_job"
 
 let map_foreign domid mfn = Lwt_unix.run_job (map_foreign_job domid mfn)
 
-external map_fd: Unix.file_descr -> int -> Cstruct.buf option = "ml_map_fd"
+external map_fd: Unix.file_descr -> int -> buf option = "ml_map_fd"
 
-external unmap_foreign: Cstruct.buf -> unit = "ml_unmap"
+external unmap_foreign: buf -> unit = "ml_unmap"
 
 external sizeof_xc_domaininfo_t: unit -> int = "ml_sizeof_xc_domaininfo_t"
 
-external alloc_page_aligned: int -> Cstruct.buf option = "ml_alloc_page_aligned"
+external alloc_page_aligned: int -> buf option = "ml_alloc_page_aligned"
 
-external free_page_aligned: Cstruct.buf -> unit = "ml_free_page_aligned"
+external free_page_aligned: buf -> unit = "ml_free_page_aligned"
 
-external domain_infolist_job: int -> int -> Cstruct.buf -> int Lwt_unix.job = "lwt_domain_infolist_job"
+external domain_infolist_job: int -> int -> Cstruct.t -> int Lwt_unix.job = "lwt_domain_infolist_job"
 
 type info = {
 	domid: int;
@@ -21,7 +23,7 @@ type info = {
 	shutdown: bool;
 }
 
-external xc_domaininfo_t_parse: Cstruct.buf -> info = "ml_domain_infolist_parse"
+external xc_domaininfo_t_parse: Cstruct.t -> info = "ml_domain_infolist_parse"
 
 open Lwt
 
@@ -34,6 +36,7 @@ let xc_domain_getinfolist lowest_domid =
 		| None -> return None
 		| Some buf ->
 			try_lwt
+				let buf = Cstruct.of_bigarray buf in
 				lwt number_found = Lwt_unix.run_job (domain_infolist_job lowest_domid batch_size buf) in
 				let rec parse buf n acc =
 					if n = number_found

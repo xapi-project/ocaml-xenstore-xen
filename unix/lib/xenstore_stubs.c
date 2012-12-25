@@ -141,11 +141,18 @@ CAMLprim value ml_free_page_aligned(value ba)
   CAMLreturn(Val_unit);
 }
 
-CAMLprim value ml_domain_infolist_parse(value buf)
+CAMLprim value ml_domain_infolist_parse(value cstruct)
 {
-  CAMLparam1(buf);
-  CAMLlocal1(result);
-  xc_domaininfo_t *di = Data_bigarray_val(buf);
+  CAMLparam1(cstruct);
+  CAMLlocal3(result, v_ba, v_ofs);
+  unsigned char *addr;
+  struct caml_ba_array *a = NULL;
+  v_ba = Field(cstruct, 0);
+  v_ofs = Field(cstruct, 1);
+  a = Caml_ba_array_val(v_ba);
+  addr = a->data + Int_val(v_ofs);
+
+  xc_domaininfo_t *di = addr;
   result = caml_alloc_tuple(3);
   Store_field(result, 0, Val_int(di->domain));
   Store_field(result, 1, Val_bool(di->flags & XEN_DOMINF_dying));
