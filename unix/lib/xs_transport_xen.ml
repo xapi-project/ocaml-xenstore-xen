@@ -14,13 +14,18 @@
 
 open Lwt
 
+type 'a t = 'a Lwt.t
+let return x = return x
+let ( >>= ) m f = m >>= f
+
 open Introduce
 
 let debug fmt = Logging.debug "xs_transport_xen" fmt
 
-type t = {
+type channel = {
 	address: address;
-    page: Cstruct.t;
+    page: Xenstore.buf;
+    ring: Cstruct.t;
     port: int;
 	c: unit Lwt_condition.t;
 	mutable shutdown: bool;
@@ -29,8 +34,8 @@ type t = {
 (* Thrown when an attempt is made to read or write to a closed ring *)
 exception Ring_shutdown
 
-let domains : (int, t) Hashtbl.t = Hashtbl.create 128
-let by_port : (int, t) Hashtbl.t = Hashtbl.create 128
+let domains : (int, channel) Hashtbl.t = Hashtbl.create 128
+let by_port : (int, channel) Hashtbl.t = Hashtbl.create 128
 
 let xenstored_proc_port = "/proc/xen/xsd_port"
 let xenstored_proc_kva  = "/proc/xen/xsd_kva"
@@ -148,6 +153,7 @@ let create_dom0 () =
 					remote_port = remote_port;
 				};
 				page = page;
+				ring = Cstruct.of_bigarray page;
 				port = port;
 				c = Lwt_condition.create ();
 				shutdown = false;
@@ -169,6 +175,7 @@ let create_domU address =
 	let d = {
 		address = address;
 		page = page;
+		ring = Cstruct.of_bigarray page;
 		port = port;
 		c = Lwt_condition.create ();
 		shutdown = false;
@@ -181,7 +188,7 @@ let rec read t buf ofs len =
 	if t.shutdown
 	then fail Ring_shutdown
 	else
-		let n = Xenstore_ring.Ring.unsafe_read t.page buf ofs len in
+		let n = Xenstore_ring.Ring.Front.unsafe_read t.ring buf ofs len in
 		if n = 0
 		then begin
 			lwt () = Lwt_condition.wait t.c in
@@ -195,7 +202,7 @@ let rec write t buf ofs len =
 	if t.shutdown
 	then fail Ring_shutdown
 	else
-		let n = Xenstore_ring.Ring.unsafe_write t.page buf ofs len in
+		let n = Xenstore_ring.Ring.Front.unsafe_write t.ring buf ofs len in
 		if n > 0 then Xenstore.xc_evtchn_notify eventchn t.port;
 		if n < len then begin
 			lwt () = Lwt_condition.wait t.c in
@@ -235,7 +242,7 @@ let namespace_of t =
 
 	let read _ (perms: Perms.t) (path: Store.Path.t) =
 		Perms.has perms Perms.CONFIGURE;
-		let pairs = Xenstore_ring.Ring.to_debug_map t.page in
+		let pairs = Xenstore_ring.Ring.to_debug_map t.ring in
 		match Store.Path.to_string_list path with
 		| [] -> ""
 		| [ "mfn" ] -> Nativeint.to_string t.address.mfn

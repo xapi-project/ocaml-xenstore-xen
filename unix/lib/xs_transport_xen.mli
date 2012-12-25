@@ -12,16 +12,20 @@
  * GNU Lesser General Public License for more details.
  *)
 
-type t
+type 'a t = 'a Lwt.t
+val ( >>= ): 'a t -> ('a -> 'b t) -> 'b t
+val return: 'a -> 'a t
 
-val read: t -> string -> int -> int -> int Lwt.t
-val write: t -> string -> int -> int -> unit Lwt.t
-val destroy: t -> unit Lwt.t
-val address_of: t -> Xs_protocol.address Lwt.t
+type channel
+
+val read: channel -> string -> int -> int -> int Lwt.t
+val write: channel -> string -> int -> int -> unit Lwt.t
+val destroy: channel -> unit Lwt.t
+val address_of: channel -> Xs_protocol.address Lwt.t
 
 type server
 
 val listen: unit -> server Lwt.t
-val accept_forever: server -> (t -> unit Lwt.t) -> 'a Lwt.t
+val accept_forever: server -> (channel -> unit Lwt.t) -> 'a Lwt.t
 
-val namespace_of: t -> (module Namespace.IO) option
+val namespace_of: channel -> (module Namespace.IO) option
