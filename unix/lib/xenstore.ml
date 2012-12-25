@@ -7,18 +7,6 @@ external map_fd: Unix.file_descr -> int -> Cstruct.buf option = "ml_map_fd"
 
 external unmap_foreign: Cstruct.buf -> unit = "ml_unmap"
 
-type channel_state = {
-	cons: int;
-	prod: int;
-	data: int;
-}
-type ring_state = {
-	request: channel_state;
-	response: channel_state;
-}
-
-external get_ring_state: Cstruct.buf -> ring_state = "xs_ring_state"
-
 external sizeof_xc_domaininfo_t: unit -> int = "ml_sizeof_xc_domaininfo_t"
 
 external alloc_page_aligned: int -> Cstruct.buf option = "ml_alloc_page_aligned"

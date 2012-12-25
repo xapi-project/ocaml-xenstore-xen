@@ -235,6 +235,7 @@ let namespace_of t =
 
 	let read _ (perms: Perms.t) (path: Store.Path.t) =
 		Perms.has perms Perms.CONFIGURE;
+		let pairs = Xenstore_ring.Ring.to_debug_map t.page in
 		match Store.Path.to_string_list path with
 		| [] -> ""
 		| [ "mfn" ] -> Nativeint.to_string t.address.mfn
@@ -244,12 +245,7 @@ let namespace_of t =
 		| [ "wakeup" ]
 		| [ "request" ]
 		| [ "response" ] -> ""
-		| [ "request"; "cons" ] -> string_of_int (Xenstore.((get_ring_state t.page).request.cons))
-		| [ "request"; "prod" ] -> string_of_int (Xenstore.((get_ring_state t.page).request.prod))
-		| [ "request"; "data" ] -> string_of_int (Xenstore.((get_ring_state t.page).request.data))
-		| [ "response"; "cons" ] -> string_of_int (Xenstore.((get_ring_state t.page).response.cons))
-		| [ "response"; "prod" ] -> string_of_int (Xenstore.((get_ring_state t.page).response.prod))
-		| [ "response"; "data" ] -> string_of_int (Xenstore.((get_ring_state t.page).response.data))
+		| [ x ] when List.mem_assoc x pairs -> List.assoc x pairs
 		| _ -> Store.Path.doesnt_exist path
 
 	let write _ _ perms path v =

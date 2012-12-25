@@ -4,18 +4,6 @@ val unmap_foreign: Cstruct.buf -> unit
 
 val map_fd: Unix.file_descr -> int -> Cstruct.buf option
 
-type channel_state = {
-	cons: int;
-	prod: int;
-	data: int;
-}
-type ring_state = {
-	request: channel_state;
-	response: channel_state;
-}
-
-val get_ring_state: Cstruct.buf -> ring_state
-
 type info = {
 	domid: int;
 	dying: bool;
