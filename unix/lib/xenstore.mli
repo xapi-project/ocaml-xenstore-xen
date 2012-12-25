@@ -4,9 +4,6 @@ val unmap_foreign: Cstruct.buf -> unit
 
 val map_fd: Unix.file_descr -> int -> Cstruct.buf option
 
-val unsafe_read: Cstruct.buf -> string -> int -> int -> int
-val unsafe_write: Cstruct.buf -> string -> int -> int -> int
-
 type channel_state = {
 	cons: int;
 	prod: int;

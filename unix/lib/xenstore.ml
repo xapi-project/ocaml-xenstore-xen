@@ -7,9 +7,6 @@ external map_fd: Unix.file_descr -> int -> Cstruct.buf option = "ml_map_fd"
 
 external unmap_foreign: Cstruct.buf -> unit = "ml_unmap"
 
-external unsafe_read: Cstruct.buf -> string -> int -> int -> int = "ml_interface_read"
-external unsafe_write: Cstruct.buf -> string -> int -> int -> int = "ml_interface_write"
-
 type channel_state = {
 	cons: int;
 	prod: int;

@@ -12,7 +12,7 @@ Library xenstore_unix
   Path:               lib
   Findlibname:        xenstore_server_unix
   Modules:            Xs_transport_unix, Xs_transport_xen, Xenstore
-  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server
+  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, shared-memory-ring, shared-memory-ring.xenstore
   CSources:           xenstore_stubs.c
 # Surely I don't actually need these
 #  CCOpt:              -I. -I/home/djs/.opam/system/lib -I/home/djs/.opam/system/lib/lwt -I/usr/lib/ocaml/lwt

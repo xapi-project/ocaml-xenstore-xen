@@ -20,7 +20,7 @@ let debug fmt = Logging.debug "xs_transport_xen" fmt
 
 type t = {
 	address: address;
-    page: Cstruct.buf;
+    page: Cstruct.t;
     port: int;
 	c: unit Lwt_condition.t;
 	mutable shutdown: bool;
@@ -181,7 +181,7 @@ let rec read t buf ofs len =
 	if t.shutdown
 	then fail Ring_shutdown
 	else
-		let n = Xenstore.unsafe_read t.page buf ofs len in
+		let n = Xenstore_ring.Ring.unsafe_read t.page buf ofs len in
 		if n = 0
 		then begin
 			lwt () = Lwt_condition.wait t.c in
@@ -195,7 +195,7 @@ let rec write t buf ofs len =
 	if t.shutdown
 	then fail Ring_shutdown
 	else
-		let n = Xenstore.unsafe_write t.page buf ofs len in
+		let n = Xenstore_ring.Ring.unsafe_write t.page buf ofs len in
 		if n > 0 then Xenstore.xc_evtchn_notify eventchn t.port;
 		if n < len then begin
 			lwt () = Lwt_condition.wait t.c in
