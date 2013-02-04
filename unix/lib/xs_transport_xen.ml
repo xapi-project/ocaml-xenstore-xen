@@ -188,7 +188,7 @@ let rec read t buf ofs len =
 	if t.shutdown
 	then fail Ring_shutdown
 	else
-		let n = Xenstore_ring.Ring.Front.unsafe_read t.ring buf ofs len in
+		let n = Xenstore_ring.Ring.Back.unsafe_read t.ring buf ofs len in
 		if n = 0
 		then begin
 			lwt () = Lwt_condition.wait t.c in
@@ -202,7 +202,7 @@ let rec write t buf ofs len =
 	if t.shutdown
 	then fail Ring_shutdown
 	else
-		let n = Xenstore_ring.Ring.Front.unsafe_write t.ring buf ofs len in
+		let n = Xenstore_ring.Ring.Back.unsafe_write t.ring buf ofs len in
 		if n > 0 then Xenstore.xc_evtchn_notify eventchn t.port;
 		if n < len then begin
 			lwt () = Lwt_condition.wait t.c in
