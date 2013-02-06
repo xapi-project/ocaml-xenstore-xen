@@ -36,6 +36,12 @@ let main () =
 	let (_: 'a) = logging_thread Logging.logger in
 	let (_: 'a) = logging_thread Logging.access_logger in
 
+	let pidfile = "/var/run/xenstored.pid" in
+	debug "Writing pidfile %s" pidfile;
+	(try Unix.unlink pidfile with _ -> ());
+	let pid = Unix.getpid () in
+	lwt _ = Lwt_io.with_file pidfile ~mode:Lwt_io.output (fun chan -> Lwt_io.fprintlf chan "%d" pid) in
+
 	Arg.parse
 		[ "-path", Arg.Set_string Xs_transport_unix.xenstored_socket, Printf.sprintf "Unix domain socket to listen on (default %s)" !Xs_transport_unix.xenstored_socket ]
 		(fun _ -> ())
