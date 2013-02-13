@@ -64,11 +64,7 @@ let address_of (fd, _) =
 		with Not_found -> cmdline in
 	let basename = Filename.basename filename in
 	let name = Printf.sprintf "%d:%s:%d" pid basename (int_of_file_descr fd) in
-	let padto x y =
-		if String.length x > y
-		then String.sub x 0 y
-		else x ^ (String.make (y - (String.length x)) ' ') in
-	return (Xs_protocol.Unix(padto name 16))
+	return (Xs_protocol.Unix name)
 
 (* Servers which accept connections *)
 type server = Lwt_unix.file_descr
