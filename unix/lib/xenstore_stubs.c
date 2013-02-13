@@ -95,13 +95,13 @@ static value result_domain_infolist(struct job_domain_infolist *job)
   return Val_int(0);
 }
 
-CAMLprim value lwt_domain_infolist_job(value lowest_domid, value number_requested, value buf)
+CAMLprim value lwt_domain_infolist_job(value lowest_domid, value number_requested, value cstruct)
 {
   struct job_domain_infolist* job =
     (struct job_domain_infolist*)lwt_unix_new(struct job_domain_infolist);
   job->lowest_domid = Int_val(lowest_domid);
   job->number_requested = Int_val(number_requested);
-  job->result = Data_bigarray_val(buf);
+  job->result = Data_bigarray_val(Field(cstruct, 0));
   job->job.worker = (lwt_unix_job_worker)worker_domain_infolist;
   job->job.result = (lwt_unix_job_result)result_domain_infolist;
   return lwt_unix_alloc_job(&job->job);
