@@ -97,13 +97,10 @@ static value result_domain_infolist(struct job_domain_infolist *job)
 
 CAMLprim value lwt_domain_infolist_job(value lowest_domid, value number_requested, value cstruct)
 {
-  struct job_domain_infolist* job =
-    (struct job_domain_infolist*)lwt_unix_new(struct job_domain_infolist);
+  LWT_UNIX_INIT_JOB(job, domain_infolist, 0);
   job->lowest_domid = Int_val(lowest_domid);
   job->number_requested = Int_val(number_requested);
   job->result = Data_bigarray_val(Field(cstruct, 0));
-  job->job.worker = (lwt_unix_job_worker)worker_domain_infolist;
-  job->job.result = (lwt_unix_job_result)result_domain_infolist;
   return lwt_unix_alloc_job(&job->job);
 }
 
@@ -199,12 +196,9 @@ static value result_map_foreign(struct job_map_foreign *job)
 
 CAMLprim value lwt_map_foreign_job(value domid, value mfn)
 {
-  struct job_map_foreign* job =
-    (struct job_map_foreign*)lwt_unix_new(struct job_map_foreign);
+  LWT_UNIX_INIT_JOB(job, map_foreign, 0);
   job->domid = Int_val(domid);
   job->mfn = Nativeint_val(mfn);
-  job->job.worker = (lwt_unix_job_worker)worker_map_foreign;
-  job->job.result = (lwt_unix_job_result)result_map_foreign;
   return lwt_unix_alloc_job(&job->job);
 }
 
