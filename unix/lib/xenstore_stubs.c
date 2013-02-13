@@ -49,11 +49,7 @@ struct job_domain_infolist{
 static void worker_domain_infolist(struct job_domain_infolist *job)
 {
   xc_interface *xch;
-  int ret;
-
-  job->errno_copy = 0;
-  job->error = NULL;
-  job->number_found = 0;
+  int ret = 0;
 
   xch = xc_interface_open(NULL, NULL, 0);
   if (xch){
@@ -101,6 +97,9 @@ CAMLprim value lwt_domain_infolist_job(value lowest_domid, value number_requeste
   job->lowest_domid = Int_val(lowest_domid);
   job->number_requested = Int_val(number_requested);
   job->result = Data_bigarray_val(Field(cstruct, 0));
+  job->errno_copy = 0;
+  job->error = NULL;
+  job->number_found = 0;
   return lwt_unix_alloc_job(&job->job);
 }
 
