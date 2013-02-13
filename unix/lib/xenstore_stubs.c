@@ -205,7 +205,6 @@ CAMLprim value lwt_map_foreign_job(value domid, value mfn)
 CAMLprim value ml_unmap(value ba)
 {
   CAMLparam1(ba);
-  CAMLlocal1(arg);
   int ret = munmap(Data_bigarray_val(ba), 4096);
   if (ret != 0)
 	syslog(LOG_ERR, "munmap %x = %d:%s", Data_bigarray_val(ba), errno, strerror(errno));
