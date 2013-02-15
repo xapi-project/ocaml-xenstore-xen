@@ -49,11 +49,7 @@ struct job_domain_infolist{
 static void worker_domain_infolist(struct job_domain_infolist *job)
 {
   xc_interface *xch;
-  int ret;
-
-  job->errno_copy = 0;
-  job->error = NULL;
-  job->number_found = 0;
+  int ret = 0;
 
   xch = xc_interface_open(NULL, NULL, 0);
   if (xch){
@@ -95,15 +91,15 @@ static value result_domain_infolist(struct job_domain_infolist *job)
   return Val_int(0);
 }
 
-CAMLprim value lwt_domain_infolist_job(value lowest_domid, value number_requested, value buf)
+CAMLprim value lwt_domain_infolist_job(value lowest_domid, value number_requested, value cstruct)
 {
-  struct job_domain_infolist* job =
-    (struct job_domain_infolist*)lwt_unix_new(struct job_domain_infolist);
+  LWT_UNIX_INIT_JOB(job, domain_infolist, 0);
   job->lowest_domid = Int_val(lowest_domid);
   job->number_requested = Int_val(number_requested);
-  job->result = Data_bigarray_val(buf);
-  job->job.worker = (lwt_unix_job_worker)worker_domain_infolist;
-  job->job.result = (lwt_unix_job_result)result_domain_infolist;
+  job->result = Data_bigarray_val(Field(cstruct, 0));
+  job->errno_copy = 0;
+  job->error = NULL;
+  job->number_found = 0;
   return lwt_unix_alloc_job(&job->job);
 }
 
@@ -146,11 +142,9 @@ CAMLprim value ml_domain_infolist_parse(value cstruct)
   CAMLparam1(cstruct);
   CAMLlocal3(result, v_ba, v_ofs);
   unsigned char *addr;
-  struct caml_ba_array *a = NULL;
   v_ba = Field(cstruct, 0);
   v_ofs = Field(cstruct, 1);
-  a = Caml_ba_array_val(v_ba);
-  addr = a->data + Int_val(v_ofs);
+  addr = Caml_ba_data_val(v_ba) + Int_val(v_ofs);
 
   xc_domaininfo_t *di = addr;
   result = caml_alloc_tuple(3);
@@ -199,19 +193,15 @@ static value result_map_foreign(struct job_map_foreign *job)
 
 CAMLprim value lwt_map_foreign_job(value domid, value mfn)
 {
-  struct job_map_foreign* job =
-    (struct job_map_foreign*)lwt_unix_new(struct job_map_foreign);
+  LWT_UNIX_INIT_JOB(job, map_foreign, 0);
   job->domid = Int_val(domid);
   job->mfn = Nativeint_val(mfn);
-  job->job.worker = (lwt_unix_job_worker)worker_map_foreign;
-  job->job.result = (lwt_unix_job_result)result_map_foreign;
   return lwt_unix_alloc_job(&job->job);
 }
 
 CAMLprim value ml_unmap(value ba)
 {
   CAMLparam1(ba);
-  CAMLlocal1(arg);
   int ret = munmap(Data_bigarray_val(ba), 4096);
   if (ret != 0)
 	syslog(LOG_ERR, "munmap %x = %d:%s", Data_bigarray_val(ba), errno, strerror(errno));
