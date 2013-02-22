@@ -25,3 +25,11 @@ Executable server_unix
   Custom:             true
   Install:            false
   BuildDepends:       lwt, lwt.unix, xenstore, xenstore.server, xenstore_server_unix
+
+Executable dbgring
+  CompiledObject:     best
+  Path:               src
+  MainIs:             dbgring.ml
+  Custom:             true
+  Install:            false
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_server_unix, xenctrl, cstruct
