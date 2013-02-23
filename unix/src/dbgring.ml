@@ -216,53 +216,56 @@ end
 let ring_size = 1024
 
 let analyse ring =
+	let one_direction cons prod ring =
+		let cons' = Int32.to_int cons mod ring_size in
+		let prod' = Int32.to_int prod mod ring_size in
+		Printf.printf "* consumer = 0x%04lx (mod 0x%x = 0x%04x)\n"
+			cons ring_size cons';
+		Printf.printf "* producer = 0x%04lx (mod 0x%x = 0x%04x)\n"
+			prod ring_size prod';
+		let bytes_ba = Bigarray.(Array1.create char c_layout ring_size) in
+		let bytes = Cstruct.of_bigarray bytes_ba in
+		Cstruct.blit ring prod' bytes 0 (ring_size - prod');
+		Cstruct.blit ring 0 bytes (ring_size - prod') prod';
+		let scores = ref [] in
+		for off = 0 to ring_size - 1 do
+			let bytes' = Cstruct.shift bytes off in
+			let n = count_packets bytes' in
+			scores := (off, n) :: !scores
+		done;
+		match List.stable_sort (fun a b -> compare (snd b) (snd a)) !scores with
+		| [] -> Printf.printf "Failed to discover any packet boundaries.\n"
+		| (off, n) :: _ ->
+			Printf.printf "* %d valid packets detected.\n" n;
+			Printf.printf "* offset: producer (0x%04lx) + 0x%04x mod 0x%x = 0x%04lx mod 0x%x = 0x%04x\n\n" prod off ring_size (Int32.(add prod (of_int off))) ring_size ((Int32.to_int prod + off) mod ring_size);
+			let preamble = Cstruct.sub bytes 0 off in
+			let printer = HexPrinter.make () in
+			HexPrinter.write_cstruct printer preamble;
+			HexPrinter.flush printer;
+			Printf.printf "-- remainder of overwritten old packet (%d bytes)\n\n" (Cstruct.len preamble);
+			let packets = fold_over_packets (fun acc p -> p :: acc) [] (Cstruct.shift bytes off) in
+			List.iter (fun p ->
+				let open Xs_protocol in
+				let d = get_data p in
+				HexPrinter.write_string printer (to_string p);
+				HexPrinter.flush printer;
+				Printf.printf "-- rid = %08lx; tid = %08lx; %s len = %04d \"%s\"\n\n%!"
+				(get_rid p) (get_tid p) (Op.to_string (get_ty p))
+				(String.length d) (escape_string d);
+
+			) packets;
+			() in
+
 	let input_cons = get_ring_input_cons ring in
 	let input_prod = get_ring_input_prod ring in
 	let output_cons = get_ring_output_cons ring in
 	let output_prod = get_ring_output_prod ring in
-	let input_cons' = Int32.to_int input_cons mod ring_size in
-	let input_prod' = Int32.to_int input_prod mod ring_size in
-	let output_cons' = Int32.to_int output_cons mod ring_size in
-	let output_prod' = Int32.to_int output_prod mod ring_size in
 	Printf.printf "replies to the guest\n";
 	Printf.printf "====================\n";
-	Printf.printf "* consumer = 0x%04lx (mod 0x%x = 0x%04x)\n"
-		input_cons ring_size input_cons';
-	Printf.printf "* producer = 0x%04lx (mod 0x%x = 0x%04x)\n"
-		input_prod ring_size input_prod';
-	let input_ba = Bigarray.(Array1.create char c_layout ring_size) in
-	let input = Cstruct.of_bigarray input_ba in
-	Cstruct.blit (get_ring_input ring) input_prod' input 0 (ring_size - input_prod');
-	Cstruct.blit (get_ring_input ring) 0 input (ring_size - input_prod') input_prod';
-	(* Cstruct.hexdump input; *)
-	let scores = ref [] in
-	for off = 0 to ring_size - 1 do
-		let input' = Cstruct.shift input off in
-		let n = count_packets input' in
-		scores := (off, n) :: !scores
-	done;
-	match List.stable_sort (fun a b -> compare (snd b) (snd a)) !scores with
-	| [] -> Printf.printf "Failed to discover any packet boundaries.\n"
-	| (off, n) :: _ ->
-		Printf.printf "* %d valid packets detected.\n" n;
-		Printf.printf "* offset: producer (0x%04lx) + 0x%04x mod 0x%x = 0x%04lx mod 0x%x = 0x%04x\n\n" input_prod off ring_size (Int32.(add input_prod (of_int off))) ring_size ((Int32.to_int input_prod + off) mod ring_size);
-		let preamble = Cstruct.sub input 0 off in
-		let printer = HexPrinter.make () in
-		HexPrinter.write_cstruct printer preamble;
-		HexPrinter.flush printer;
-		Printf.printf "-- remainder of overwritten old packet (%d bytes)\n\n" (Cstruct.len preamble);
-		let packets = fold_over_packets (fun acc p -> p :: acc) [] (Cstruct.shift input off) in
-		List.iter (fun p ->
-			let open Xs_protocol in
-			let d = get_data p in
-			HexPrinter.write_string printer (to_string p);
-			HexPrinter.flush printer;
-			Printf.printf "-- rid = %08lx; tid = %08lx; %s len = %04d \"%s\"\n\n%!"
-			(get_rid p) (get_tid p) (Op.to_string (get_ty p))
-			(String.length d) (escape_string d);
-
-		) packets;
-		()
+	one_direction input_cons input_prod (get_ring_input ring);
+	Printf.printf "requests from the guest\n";
+	Printf.printf "=======================\n";
+	one_direction output_cons output_prod (get_ring_output ring)
 
 let dump domid filename =
 	let ring =
