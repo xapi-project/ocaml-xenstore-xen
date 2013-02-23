@@ -32,4 +32,4 @@ Executable dbgring
   MainIs:             dbgring.ml
   Custom:             true
   Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore_server_unix, xenctrl, cstruct
+  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.unix, xenstore_server_unix, xenctrl, cstruct, cmdliner, threads, xenstore_transport.unix
