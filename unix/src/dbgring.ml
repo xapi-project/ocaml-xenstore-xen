@@ -92,24 +92,16 @@ cstruct header {
 	uint32_t len
 } as little_endian
 
-exception Corrupt
-
-let count_packets c =
-	let rec follow c =
-		if Cstruct.len c < sizeof_header
-		then 0
-		else begin
-			if Xs_protocol.Op.of_int32 (get_header_ty c) = None
-			then raise Corrupt;
-			(* demand request ids are unique? *)
-			let len = Int32.to_int (get_header_len c) in
-			if len > 4096 || len < 0 then raise Corrupt;
-			let next = Cstruct.shift c (sizeof_header + len) in
-			1 + (follow next)
-		end in
-	try
-		follow c
-	with Corrupt -> 0
+(* true if we are sure the header is invalid, false otherwise *)
+let is_header_invalid c =
+	true
+	&& (Cstruct.len c >= sizeof_header)
+	&& (
+		false
+		|| (Xs_protocol.Op.of_int32 (get_header_ty c) = None)
+		|| (get_header_len c < 0l)
+		|| (get_header_len c > 4096l)
+	)
 
 let fold_over_packets f init c =
 	let open Xs_protocol in
@@ -235,6 +227,9 @@ let analyse ring =
 			if x < 0 then x + ring_size else x in
 		Printf.printf "* rotating ring so producer is at origin (0)\n";
 		Printf.printf "* rotated consumer = 0x%04x\n" cons'';
+		if cons'' = 0
+		then Printf.printf "* consumer has consumed all bytes (good)\n"
+		else Printf.printf "* consumer has not yet consumed all bytes: has it become stuck?\n";
 		let scores = ref [] in
 		for off = 0 to ring_size - 1 do
 			let bytes' = Cstruct.shift bytes off in
@@ -251,9 +246,13 @@ let analyse ring =
 			HexPrinter.write_cstruct printer preamble;
 			HexPrinter.flush printer;
 			Printf.printf "-- remainder of overwritten old packet (%d bytes)\n\n" (Cstruct.len preamble);
-			let packets = fold_over_packets (fun acc p -> p :: acc) [] (Cstruct.shift bytes off) in
-			let total_packet_length = List.fold_left (+) 0 (List.map (fun x -> String.length (Xs_protocol.get_data x) + sizeof_header) packets) in
+			let packets = List.rev (fold_over_packets (fun acc p -> p :: acc) [] (Cstruct.shift bytes off)) in
+			let total_packet_length = List.fold_left (+) 0 (List.map (fun x -> String.length (Xs_protocol.to_string x)) packets) in
 			let postamble = Cstruct.shift bytes (off + total_packet_length) in
+
+
+			assert (Cstruct.len preamble + total_packet_length + (Cstruct.len postamble) == ring_size);
+
 			List.iter (fun p ->
 				let open Xs_protocol in
 				let d = get_data p in
@@ -266,7 +265,12 @@ let analyse ring =
 			) packets;
 			HexPrinter.write_cstruct printer postamble;
 			HexPrinter.flush printer;
-			Printf.printf "-- partially written new packets (%d bytes)\n\n" (Cstruct.len postamble);
+			Printf.printf "-- partially written new packets (%d bytes)\n" (Cstruct.len postamble);
+			(* If the header looks broken then this indicates
+			   corruption. *)
+			if is_header_invalid postamble
+			then Printf.printf "-- ERROR: this packet header is definitely invalid\n";
+			Printf.printf "\n";
 			(* Need to highlight consumer pointer position *)
 			() in
 
