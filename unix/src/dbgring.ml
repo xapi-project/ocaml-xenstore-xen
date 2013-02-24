@@ -244,6 +244,8 @@ let analyse ring =
 			HexPrinter.flush printer;
 			Printf.printf "-- remainder of overwritten old packet (%d bytes)\n\n" (Cstruct.len preamble);
 			let packets = fold_over_packets (fun acc p -> p :: acc) [] (Cstruct.shift bytes off) in
+			let total_packet_length = List.fold_left (+) 0 (List.map (fun x -> String.length (Xs_protocol.get_data x) + sizeof_header) packets) in
+			let postamble = Cstruct.shift bytes (off + total_packet_length) in
 			List.iter (fun p ->
 				let open Xs_protocol in
 				let d = get_data p in
@@ -254,6 +256,10 @@ let analyse ring =
 				(String.length d) (escape_string d);
 
 			) packets;
+			HexPrinter.write_cstruct printer postamble;
+			HexPrinter.flush printer;
+			Printf.printf "-- partially written new packets (%d bytes)\n\n" (Cstruct.len postamble);
+			(* Need to highlight consumer pointer position *)
 			() in
 
 	let input_cons = get_ring_input_cons ring in
@@ -268,14 +274,17 @@ let analyse ring =
 	one_direction output_cons output_prod (get_ring_output ring)
 
 let dump domid filename =
+	Printf.fprintf stderr "attempting to map ring for domid %d\n" domid;
 	let ring =
 		if domid = 0
 		then open_ring0 ()
 		else
 			let module Client = Xs_client_unix.Client(Xs_transport_unix_client) in
 			let client = Client.make () in
-			let mfn = Nativeint.of_string (Client.with_xs client (fun h -> Client.read h (Printf.sprintf "/local/domain/%d/store/ring-ref" domid))) in
-			open_ringU domid mfn in
+			let mfn = Client.with_xs client (fun h -> Client.read h (Printf.sprintf "/local/domain/%d/store/ring-ref" domid)) in
+			Printf.fprintf stderr "store mfn = %s\n" mfn;
+			open_ringU domid (Nativeint.of_string mfn) in
+	Printf.fprintf stderr "saving to %s\n" filename;
 	save_ring ring filename;
 	`Ok ()
 
