@@ -24,9 +24,9 @@ let debug fmt = Logging.debug "xs_transport_xen" fmt
 
 type channel = {
 	address: address;
-    page: Xenstore.buf;
-    ring: Cstruct.t;
-    port: int;
+	page: Xenstore.buf;
+	ring: Cstruct.t;
+	port: int;
 	c: unit Lwt_condition.t;
 	mutable shutdown: bool;
 }
