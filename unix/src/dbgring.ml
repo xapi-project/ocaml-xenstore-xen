@@ -225,8 +225,16 @@ let analyse ring =
 			prod ring_size prod';
 		let bytes_ba = Bigarray.(Array1.create char c_layout ring_size) in
 		let bytes = Cstruct.of_bigarray bytes_ba in
+		(* rotate the ring so the producer pointer is at the origin.
+		   This is where all the oldest, partially overwritten packets
+		   should be. *)
 		Cstruct.blit ring prod' bytes 0 (ring_size - prod');
 		Cstruct.blit ring 0 bytes (ring_size - prod') prod';
+		let cons'' =
+			let x = cons' - prod' in
+			if x < 0 then x + ring_size else x in
+		Printf.printf "* rotating ring so producer is at origin (0)\n";
+		Printf.printf "* rotated consumer = 0x%04x\n" cons'';
 		let scores = ref [] in
 		for off = 0 to ring_size - 1 do
 			let bytes' = Cstruct.shift bytes off in
