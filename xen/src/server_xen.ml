@@ -14,6 +14,7 @@
 
 open Lwt
 open Xs_protocol
+open Xenstore_server
 
 let debug fmt = Logging.debug "server_xen" fmt
 let warn  fmt = Logging.warn  "server_xen" fmt

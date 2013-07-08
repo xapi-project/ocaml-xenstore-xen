@@ -18,9 +18,9 @@ type 'a t = 'a Lwt.t
 let return x = return x
 let ( >>= ) m f = m >>= f
 
-open Introduce
+open Xenstore_server.Introduce
 
-let debug fmt = Logging.debug "xs_transport_xen" fmt
+let debug fmt = Xenstore_server.Logging.debug "xs_transport_xen" fmt
 
 type channel = {
 	address: address;
@@ -127,7 +127,7 @@ let eventchn =
 								Lwt_condition.broadcast t.c ()
 							) to_close;
 						if release_domain
-						then Connection.fire (Xs_protocol.Op.Write, Store.Name.releaseDomain);                                               
+						then Xenstore_server.Connection.fire (Xs_protocol.Op.Write, Xenstore_server.Store.Name.releaseDomain);                                               
 				end;
 				return ()
 			end else return ()
@@ -238,12 +238,12 @@ let rec accept_forever stream process =
 
 let namespace_of t =
 	let module Interface = struct
-		include Namespace.Unsupported
+		include Xenstore_server.Namespace.Unsupported
 
-	let read _ (perms: Perms.t) (path: Store.Path.t) =
-		Perms.has perms Perms.CONFIGURE;
+	let read _ (perms: Xenstore_server.Perms.t) (path: Xenstore_server.Store.Path.t) =
+		Xenstore_server.Perms.has perms Xenstore_server.Perms.CONFIGURE;
 		let pairs = Xenstore_ring.Ring.to_debug_map t.ring in
-		match Store.Path.to_string_list path with
+		match Xenstore_server.Store.Path.to_string_list path with
 		| [] -> ""
 		| [ "mfn" ] -> Nativeint.to_string t.address.mfn
 		| [ "local-port" ] -> string_of_int t.port
@@ -253,25 +253,25 @@ let namespace_of t =
 		| [ "request" ]
 		| [ "response" ] -> ""
 		| [ x ] when List.mem_assoc x pairs -> List.assoc x pairs
-		| _ -> Store.Path.doesnt_exist path
+		| _ -> Xenstore_server.Store.Path.doesnt_exist path
 
 	let write _ _ perms path v =
-		Perms.has perms Perms.CONFIGURE;
-		match Store.Path.to_string_list path with
+		Xenstore_server.Perms.has perms Xenstore_server.Perms.CONFIGURE;
+		match Xenstore_server.Store.Path.to_string_list path with
 		| [ "wakeup" ] ->
 			Lwt_condition.broadcast t.c ()
-		| _ -> raise Perms.Permission_denied
+		| _ -> raise Xenstore_server.Perms.Permission_denied
 
-	let exists t perms path = try ignore(read t perms path); true with Store.Path.Doesnt_exist _ -> false
+	let exists t perms path = try ignore(read t perms path); true with Xenstore_server.Store.Path.Doesnt_exist _ -> false
 
 	let list t perms path =
-		Perms.has perms Perms.CONFIGURE;
-		match Store.Path.to_string_list path with
+		Xenstore_server.Perms.has perms Xenstore_server.Perms.CONFIGURE;
+		match Xenstore_server.Store.Path.to_string_list path with
 		| [] -> [ "mfn"; "local-port"; "remote-port"; "shutdown"; "wakeup"; "request"; "response" ]
 		| [ "request" ]
 		| [ "response" ] -> [ "cons"; "prod"; "data" ]
 		| _ -> []
 
 	end in
-	Some (module Interface: Namespace.IO)
+	Some (module Interface: Xenstore_server.Namespace.IO)
 

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c4d044cb1c54145bbe3edf44a138e4b4)
+# DO NOT EDIT (digest: 47b62377586812100114acedad503a30)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -22,15 +22,17 @@
 <lib/*.ml{,i}>: pkg_cstruct
 <lib/*.ml{,i}>: pkg_mirage
 <lib/*.ml{,i}>: pkg_cstruct.syntax
+<lib/*.ml{,i}>: pkg_shared-memory-ring.xenstore
 # Executable server_xen
-<src/server_xen.{native,byte,nobj.o}>: use_xenstore_server_domain
-<src/server_xen.{native,byte,nobj.o}>: pkg_lwt
-<src/server_xen.{native,byte,nobj.o}>: pkg_lwt.syntax
-<src/server_xen.{native,byte,nobj.o}>: pkg_xenstore
-<src/server_xen.{native,byte,nobj.o}>: pkg_xenstore.server
-<src/server_xen.{native,byte,nobj.o}>: pkg_cstruct
-<src/server_xen.{native,byte,nobj.o}>: pkg_mirage
-<src/server_xen.{native,byte,nobj.o}>: pkg_cstruct.syntax
+<src/server_xen.{native,byte}>: use_xenstore_server_domain
+<src/server_xen.{native,byte}>: pkg_lwt
+<src/server_xen.{native,byte}>: pkg_lwt.syntax
+<src/server_xen.{native,byte}>: pkg_xenstore
+<src/server_xen.{native,byte}>: pkg_xenstore.server
+<src/server_xen.{native,byte}>: pkg_cstruct
+<src/server_xen.{native,byte}>: pkg_mirage
+<src/server_xen.{native,byte}>: pkg_cstruct.syntax
+<src/server_xen.{native,byte}>: pkg_shared-memory-ring.xenstore
 <src/*.ml{,i}>: use_xenstore_server_domain
 <src/*.ml{,i}>: pkg_lwt
 <src/*.ml{,i}>: pkg_lwt.syntax
@@ -39,7 +41,8 @@
 <src/*.ml{,i}>: pkg_cstruct
 <src/*.ml{,i}>: pkg_mirage
 <src/*.ml{,i}>: pkg_cstruct.syntax
-<src/server_xen.{native,byte,nobj.o}>: custom
+<src/*.ml{,i}>: pkg_shared-memory-ring.xenstore
+<src/server_xen.{native,byte}>: custom
 # OASIS_STOP
 true: annot
 <*/*>: syntax_camlp4o

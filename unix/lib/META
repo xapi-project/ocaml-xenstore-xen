@@ -1,9 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: dd0f57c454551115766390472240d3d2)
+# DO NOT EDIT (digest: f40ee4d8cb226f5ac83cdb8b618cddcf)
 version = "0.9-dev"
 description = "Userspace xenstore server"
 requires =
-"lwt lwt.syntax xenstore xenstore.server shared-memory-ring shared-memory-ring.xenstore"
+"lwt lwt.syntax xenstore.server shared-memory-ring shared-memory-ring.xenstore"
 archive(byte) = "xenstore_server_unix.cma"
 archive(byte, plugin) = "xenstore_server_unix.cma"
 archive(native) = "xenstore_server_unix.cmxa"

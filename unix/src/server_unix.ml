@@ -15,15 +15,15 @@
 open Lwt
 open Xs_protocol
 
-let debug fmt = Logging.debug "server_unix" fmt
+let debug fmt = Xenstore_server.Logging.debug "server_unix" fmt
 
-module UnixServer = Xs_server.Server(Xs_transport_unix)
-module DomainServer = Xs_server.Server(Xs_transport_xen)
+module UnixServer = Xenstore_server.Xs_server.Server(Xs_transport_unix)
+module DomainServer = Xenstore_server.Xs_server.Server(Xs_transport_xen)
 
 let syslog = Lwt_log.syslog ~facility:`Local3 ()
 
 let rec logging_thread logger =
-	lwt lines = Logging.get logger in
+	lwt lines = Xenstore_server.Logging.get logger in
 	lwt () = Lwt_list.iter_s
 			(fun x ->
 				lwt () = Lwt_log.log ~logger:syslog ~level:Lwt_log.Notice x in
@@ -33,8 +33,8 @@ let rec logging_thread logger =
 
 let main () =
 	debug "Unix xenstored starting";
-	let (_: 'a) = logging_thread Logging.logger in
-	let (_: 'a) = logging_thread Logging.access_logger in
+	let (_: 'a) = logging_thread Xenstore_server.Logging.logger in
+	let (_: 'a) = logging_thread Xenstore_server.Logging.access_logger in
 
 	let pidfile = "/var/run/xenstored.pid" in
 	debug "Writing pidfile %s" pidfile;
@@ -50,7 +50,7 @@ let main () =
 	debug "Started server on unix domain socket";
 	let (b: unit Lwt.t) = DomainServer.serve_forever () in
 	debug "Started server on xen inter-domain transport";
-	Introduce.(introduce { domid = 0; mfn = 0n; remote_port = 0 });
+	Xenstore_server.Introduce.(introduce { domid = 0; mfn = 0n; remote_port = 0 });
 	debug "Introduced domain 0";
 	lwt () = a in
 	lwt () = b in

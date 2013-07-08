@@ -12,10 +12,9 @@ Library xenstore_server_domain
   Path:               lib
   Findlibname:        xenstore_server_domain
   Modules:            Xs_transport_domain
-  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, cstruct, cstruct.syntax, mirage
+  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, cstruct, cstruct.syntax, mirage, shared-memory-ring.xenstore
 
 Executable            server_xen
-  Target:             xen
   CompiledObject:     best
   Path:               src
   MainIs:             server_xen.ml

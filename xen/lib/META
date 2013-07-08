@@ -1,9 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: c2eea64fb4831d05649d39a5a3eae5ae)
+# DO NOT EDIT (digest: 3f86dea0fa6d25381971a5d578e29d22)
 version = "0.9-dev"
 description = "Kernelspace xenstore server"
 requires =
-"lwt lwt.syntax xenstore xenstore.server cstruct cstruct.syntax mirage"
+"lwt lwt.syntax xenstore xenstore.server cstruct cstruct.syntax mirage shared-memory-ring.xenstore"
 archive(byte) = "xenstore_server_domain.cma"
 archive(byte, plugin) = "xenstore_server_domain.cma"
 archive(native) = "xenstore_server_domain.cmxa"

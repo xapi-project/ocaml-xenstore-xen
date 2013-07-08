@@ -28,4 +28,4 @@ type server
 val listen: unit -> server Lwt.t
 val accept_forever: server -> (channel -> unit Lwt.t) -> 'a Lwt.t
 
-val namespace_of: channel -> (module Namespace.IO) option
+val namespace_of: channel -> (module Xenstore_server.Namespace.IO) option

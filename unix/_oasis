@@ -12,10 +12,10 @@ Library xenstore_server_unix
   Path:               lib
   Findlibname:        xenstore_server_unix
   Modules:            Xs_transport_unix, Xs_transport_xen, Xenstore
-  BuildDepends:       lwt, lwt.syntax, xenstore, xenstore.server, shared-memory-ring, shared-memory-ring.xenstore
+  BuildDepends:       lwt, lwt.syntax, xenstore.server, shared-memory-ring, shared-memory-ring.xenstore
   CSources:           xenstore_stubs.c
 # Surely I don't actually need these
-  CCOpt:              -I. -I/home/djs/.opam/system/lib -I/home/djs/.opam/system/lib/lwt -I/usr/lib/ocaml/lwt
+  CCOpt:              -I. -I/local/scratch/djs/.opam/system/lib -I/local/scratch/djs/.opam/system/lib/lwt -I/usr/lib/ocaml/lwt
   CClib:              -lxenctrl
 
 Executable server_unix
@@ -26,10 +26,10 @@ Executable server_unix
   Install:            false
   BuildDepends:       lwt, lwt.unix, xenstore, xenstore.server, xenstore_server_unix
 
-Executable dbgring
-  CompiledObject:     best
-  Path:               src
-  MainIs:             dbgring.ml
-  Custom:             true
-  Install:            false
-  BuildDepends:       lwt, lwt.unix, xenstore, xenstore.unix, xenstore_server_unix, xenctrl, cstruct, cmdliner, threads, xenstore_transport.unix
+#Executable dbgring
+#  CompiledObject:     best
+#  Path:               src
+#  MainIs:             dbgring.ml
+#  Custom:             true
+#  Install:            false
+# BuildDepends:       lwt, lwt.unix, xenstore.unix, xenstore_server_unix, xenctrl, cstruct, cmdliner, threads, xenstore_transport.unix

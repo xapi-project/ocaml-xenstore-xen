@@ -15,28 +15,35 @@
 open OS
 
 open Lwt
-
+open Gnt
+open Xenstore_server
 open Introduce
 
 let debug fmt = Logging.debug "xs_transport_domain" fmt
 let warn  fmt = Logging.warn  "xs_transport_domain" fmt
 let error fmt = Logging.error "xs_transport_domain" fmt
 
-type t = {
+type channel = {
 	address: address;
-	ring: Ring.Xenstore.t;
-    port: int;
+	ring: Cstruct.t;
+	port: Eventchn.t;
 	c: unit Lwt_condition.t;
 	mutable closing: bool;
 }
+type 'a t = 'a Lwt.t
+let ( >>= ) m f = m >>= f
+let return = return
 
 (* Thrown when an attempt is made to read or write to a closed ring *)
 exception Ring_shutdown
 
-let domains : (int, t) Hashtbl.t = Hashtbl.create 128
-let threads : (int, unit Lwt.t) Hashtbl.t = Hashtbl.create 128
+let domains : (int, channel) Hashtbl.t = Hashtbl.create 128
+let threads : (Eventchn.t, unit Lwt.t) Hashtbl.t = Hashtbl.create 128
 
-let grant_handles : (int, Gnttab.h) Hashtbl.t = Hashtbl.create 128
+let grant_handles : (int, Gnt.Gnttab.Local_mapping.t) Hashtbl.t = Hashtbl.create 128
+
+let interface = Gnttab.interface_open ()
+let eventchn = Eventchn.init ()
 
 (*
 (* Handle the DOM_EXC VIRQ *)
@@ -105,21 +112,21 @@ cstruct xenstore_ring{
 } as little_endian
 
 let create_domain address =
-	let page = Io_page.get () in
-	match Gnttab.map_grant ~domid:address.domid ~perm:Gnttab.RW Gnttab.xenstore page with
+	match Gnttab.map interface { Gnttab.domid = address.domid; ref = Gnt.xenstore } true with
 	| Some h ->
+		let page = Cstruct.of_bigarray (Gnttab.Local_mapping.to_buf h) in
 		Hashtbl.replace grant_handles address.domid h;
-		let port = Evtchn.bind_interdomain address.domid address.remote_port in
+		let port = Eventchn.bind_interdomain eventchn address.domid address.remote_port in
 		let d = {
 			address = address;
-			ring = Ring.Xenstore.of_buf page;
+			ring = page;
 			port = port;
 			c = Lwt_condition.create ();
 			closing = false;
 		} in
 		let (background_thread: unit Lwt.t) =
 			while_lwt true do
-				debug "Waiting for signal from domid %d on local port %d (remote port %d)" address.domid port address.remote_port;
+				debug "Waiting for signal from domid %d on local port %d (remote port %d)" address.domid (Eventchn.to_int port) address.remote_port;
 				lwt () = Activations.wait port in
 				debug "Waking domid %d" d.address.domid;
 
@@ -146,7 +153,7 @@ let rec read t buf ofs len =
 		debug "read failing: Ring_shutdown";
 		fail Ring_shutdown
 	end else
-		let n = Ring.Xenstore.Back.unsafe_read t.ring buf (* ofs *) len in
+		let n = Xenstore_ring.Ring.Back.unsafe_read t.ring buf ofs len in
 		if n = 0
 		then begin
 			debug "read of 0, blocking";
@@ -155,7 +162,7 @@ let rec read t buf ofs len =
 			read t buf ofs len
 		end else begin
 			debug "read %d" n;
-			Evtchn.notify t.port;
+			Eventchn.notify eventchn t.port;
 			return n
 		end
 
@@ -165,8 +172,8 @@ let rec write t buf ofs len =
 		debug "write failing: Ring_shutdown";
 		fail Ring_shutdown
 	end else
-		let n = Ring.Xenstore.Back.unsafe_write t.ring buf (* ofs *) len in
-		if n > 0 then Evtchn.notify t.port;
+		let n = Xenstore_ring.Ring.Back.unsafe_write t.ring buf ofs len in
+		if n > 0 then Eventchn.notify eventchn t.port;
 		if n < len then begin
 			debug "write %d < %d blocking" n len;
 			lwt () = Lwt_condition.wait t.c in
@@ -175,17 +182,21 @@ let rec write t buf ofs len =
 		end else return ()
 
 let destroy t =
-	Evtchn.unbind t.port;
+	Eventchn.unbind eventchn t.port;
 	if Hashtbl.mem grant_handles t.address.domid then begin
 		let h = Hashtbl.find grant_handles t.address.domid in
-		if not(Gnttab.unmap_grant h)
-		then error "Failed to unmap grant for domid: %d" t.address.domid;
+		begin
+			try
+				Gnttab.unmap_exn interface h
+			with _ ->
+				error "Failed to unmap grant for domid: %d" t.address.domid;
+		end;
 		Hashtbl.remove grant_handles t.address.domid
 	end;
-	if Hashtbl.mem threads t.address.domid then begin
-		let th = Hashtbl.find threads t.address.domid in
+	if Hashtbl.mem threads t.port then begin
+		let th = Hashtbl.find threads t.port in
 		Lwt.cancel th;
-		Hashtbl.remove threads t.address.domid
+		Hashtbl.remove threads t.port
 	end;
 	Hashtbl.remove domains t.address.domid;
 	return ()
@@ -218,7 +229,7 @@ let namespace_of t =
 		match Store.Path.to_string_list path with
 		| [] -> ""
 		| [ "mfn" ] -> Nativeint.to_string t.address.mfn
-		| [ "local-port" ] -> string_of_int t.port
+		| [ "local-port" ] -> string_of_int (Eventchn.to_int t.port)
 		| [ "remote-port" ] -> string_of_int t.address.remote_port
 		| [ "closing" ] -> string_of_bool t.closing
 		| [ "wakeup" ]

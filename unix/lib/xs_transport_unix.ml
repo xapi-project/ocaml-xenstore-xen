@@ -20,7 +20,7 @@ type 'a t = 'a Lwt.t
 let return x = return x
 let ( >>= ) m f = m >>= f
 
-let error fmt = Logging.error "xs_transport_unix" fmt
+let error fmt = Xenstore_server.Logging.error "xs_transport_unix" fmt
 
 let xenstored_socket = ref "/var/run/xenstored/socket"
 
@@ -89,26 +89,26 @@ let rec accept_forever fd process =
 
 let namespace_of (fd, _) =
 	let module Interface = struct
-		include Namespace.Unsupported
+		include Xenstore_server.Namespace.Unsupported
 
-	let read t (perms: Perms.t) (path: Store.Path.t) =
-		Perms.has perms Perms.CONFIGURE;
-		match Store.Path.to_string_list path with
+	let read t (perms: Xenstore_server.Perms.t) (path: Xenstore_server.Store.Path.t) =
+		Xenstore_server.Perms.has perms Xenstore_server.Perms.CONFIGURE;
+		match Xenstore_server.Store.Path.to_string_list path with
 		| [] -> ""
 		| [ "readable" ] ->
 			string_of_bool (Lwt_unix.readable fd)
 		| [ "writable" ] ->
 			string_of_bool (Lwt_unix.writable fd)
-		| _ -> Store.Path.doesnt_exist path
+		| _ -> Xenstore_server.Store.Path.doesnt_exist path
 
-	let exists t perms path = try ignore(read t perms path); true with Store.Path.Doesnt_exist _ -> false
+	let exists t perms path = try ignore(read t perms path); true with Xenstore_server.Store.Path.Doesnt_exist _ -> false
 
 	let list t perms path =
-		Perms.has perms Perms.CONFIGURE;
-		match Store.Path.to_string_list path with
+		Xenstore_server.Perms.has perms Xenstore_server.Perms.CONFIGURE;
+		match Xenstore_server.Store.Path.to_string_list path with
 		| [] -> [ "readable"; "writable" ]
 		| _ -> []
 
 	end in
-	Some (module Interface: Namespace.IO)
+	Some (module Interface: Xenstore_server.Namespace.IO)
 
