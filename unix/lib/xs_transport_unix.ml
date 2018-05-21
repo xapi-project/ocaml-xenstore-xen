@@ -29,8 +29,15 @@ type channel = Lwt_unix.file_descr * Lwt_unix.sockaddr
 let create () =
   let sockaddr = Lwt_unix.ADDR_UNIX(!xenstored_socket) in
   let fd = Lwt_unix.socket Lwt_unix.PF_UNIX Lwt_unix.SOCK_STREAM 0 in
-  lwt () = Lwt_unix.connect fd sockaddr in
+  lwt () =
+    try
+      Lwt_unix.connect fd sockaddr
+    with e ->
+      Lwt_unix.close fd;
+      raise e
+  in
   return (fd, sockaddr)
+
 let destroy (fd, _) = Lwt_unix.close fd
 let read (fd, _) = Lwt_unix.read fd
 let write (fd, _) bufs ofs len =
